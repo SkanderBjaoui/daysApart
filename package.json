@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "start": "serve dist -p 5173 -l 0.0.0.0"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -66,6 +67,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
+    "serve": "^14.2.5",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5"
   },
