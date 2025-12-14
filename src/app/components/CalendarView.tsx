@@ -31,32 +31,27 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-interface Memory {
-  id: string;
+interface Contribution {
   date: string;
-  text: string;
   author_id: string;
-  users?: {
-    name: string;
-  };
 }
 
 interface CalendarViewProps {
-  memories: Memory[];
+  contributions: Contribution[];
   totalDays: number;
   onDayClick: (date: string) => void;
   targetDate?: string; // target_date from couples table
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
-  memories,
+  contributions,
   totalDays,
   onDayClick,
   targetDate,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  console.log('CalendarView received:', { memories: memories.length, totalDays, targetDate });
+  console.log('CalendarView received:', { contributions: contributions.length, totalDays, targetDate });
 
   // Ensure we're showing the current month
   useEffect(() => {
@@ -77,9 +72,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const today = new Date();
   
-  // Calculate start date: first entry or today if no entries
-  const firstEntryDate = memories.length > 0 
-    ? new Date(Math.min(...memories.map(m => new Date(m.date).getTime())))
+  // Calculate start date: first contribution or today if no contributions
+  const firstContributionDate = contributions.length > 0 
+    ? new Date(Math.min(...contributions.map(m => new Date(m.date).getTime())))
     : today;
   
   // Calculate end date: target_date or today + totalDays
@@ -87,13 +82,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     ? new Date(targetDate)
     : new Date(today.getTime() + (totalDays * 24 * 60 * 60 * 1000));
 
-  console.log('Calendar date range:', { firstEntryDate, endDate });
+  console.log('Calendar date range:', { firstContributionDate, endDate });
 
   const getDayInfo = (day: number) => {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     // Normalize dates to midnight for proper comparison
     const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const normalizedFirstEntry = new Date(firstEntryDate.getFullYear(), firstEntryDate.getMonth(), firstEntryDate.getDate());
+    const normalizedFirstContribution = new Date(firstContributionDate.getFullYear(), firstContributionDate.getMonth(), firstContributionDate.getDate());
     const normalizedEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
     const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     
@@ -101,7 +96,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format in local timezone
     const isToday = normalizedDate.getTime() === normalizedToday.getTime();
     const isFuture = normalizedDate > normalizedToday;
-    const isInRange = normalizedDate >= normalizedFirstEntry && normalizedDate <= normalizedEnd;
+    const isInRange = normalizedDate >= normalizedFirstContribution && normalizedDate <= normalizedEnd;
 
     const daysUntil = Math.ceil((normalizedDate.getTime() - normalizedToday.getTime()) / (1000 * 60 * 60 * 24));
     const isHalfway = daysUntil === Math.floor(totalDays / 2);
@@ -115,7 +110,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         isToday, 
         isInRange, 
         normalizedDate,
-        normalizedFirstEntry,
+        normalizedFirstContribution,
         normalizedEnd,
         currentMonth, 
         today 
@@ -128,10 +123,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const renderDay = (day: number) => {
     const { isToday, isFuture, isInRange, dateStr, daysUntil, isHalfway, isWeekend } = getDayInfo(day);
     
-    // Get all memories for this day
-    const dayMemories = memories.filter(m => m.date === dateStr);
-    const partner1Memory = dayMemories.find(m => m.author_id === '00000000-0000-0000-0000-000000000001');
-    const partner2Memory = dayMemories.find(m => m.author_id === '00000000-0000-0000-0000-000000000002');
+    // Get all contributions for this day
+    const dayContributions = contributions.filter(c => c.date === dateStr);
+    const partner1Contribution = dayContributions.find(c => c.author_id === '00000000-0000-0000-0000-000000000001');
+    const partner2Contribution = dayContributions.find(c => c.author_id === '00000000-0000-0000-0000-000000000002');
 
     return (
       <div
@@ -141,12 +136,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           aspect-square rounded-2xl p-3 relative transition-all duration-300 cursor-pointer
           ${!isInRange ? 'opacity-20 blur-sm cursor-not-allowed' : ''}
           ${isToday ? 'ring-4 ring-[var(--primary)] animate-pulse' : ''}
-          ${dayMemories.length === 2 ? 'animate-glow-pink-blue' : ''}
-          ${dayMemories.length === 1 && partner1Memory && !partner2Memory ? 'animate-glow-pink' : ''}
-          ${dayMemories.length === 1 && partner2Memory && !partner1Memory ? 'animate-glow-blue' : ''}
-          ${dayMemories.length === 0 && isToday ? 'animate-glow-gray' : ''}
-          ${dayMemories.length === 0 && !isToday ? 'border-2 border-gray-300' : ''}
-          ${isInRange && dayMemories.length === 0 && !isToday ? 'hover:bg-gray-50' : ''}
+          ${partner1Contribution && partner2Contribution ? 'animate-glow-pink-blue' : ''}
+          ${partner1Contribution && !partner2Contribution ? 'animate-glow-pink' : ''}
+          ${partner2Contribution && !partner1Contribution ? 'animate-glow-blue' : ''}
+          ${dayContributions.length === 0 && isToday ? 'animate-glow-gray' : ''}
+          ${dayContributions.length === 0 && !isToday ? 'border-2 border-gray-300' : ''}
+          ${isInRange && dayContributions.length === 0 && !isToday ? 'hover:bg-gray-50' : ''}
           ${isWeekend ? 'border-2 border-[var(--muted-foreground)]/30' : ''}
           hover:scale-105 hover:shadow-lg
         `}
@@ -175,27 +170,27 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </div>
         )}
 
-        {/* Memory entries with user images */}
-        {dayMemories.length > 0 && (
-          <div className={`absolute ${dayMemories.length === 2 ? 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex gap-1' : 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'}`}>
-            {partner1Memory && (
+        {/* Contribution entries with user images */}
+        {dayContributions.length > 0 && (
+          <div className={`absolute ${dayContributions.length === 2 ? 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex gap-1' : 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'}`}>
+            {partner1Contribution && (
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--pastel-pink)] to-[var(--primary)] flex items-center justify-center text-white text-xs font-medium shadow-md">
                 N
               </div>
             )}
-            {partner2Memory && (
+            {partner2Contribution && (
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--pastel-blue)] to-[var(--secondary)] flex items-center justify-center text-white text-xs font-medium shadow-md">
                 S
               </div>
             )}
           </div>
         )}
-        {/* Memory tooltip on hover */}
-        {dayMemories.length > 0 && (
+        {/* Contribution tooltip on hover */}
+        {dayContributions.length > 0 && (
           <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black/80 text-white text-xs rounded-lg px-2 py-1 opacity-0 hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-            {dayMemories.length === 1 
-              ? `${dayMemories[0].users?.name || 'Unknown'} - ${dayMemories[0].text.substring(0, 20)}${dayMemories[0].text.length > 20 ? '...' : ''}`
-              : `Both partners - ${dayMemories.length} entries`
+            {dayContributions.length === 1 
+              ? `${dayContributions[0].author_id === '00000000-0000-0000-0000-000000000001' ? 'Nour' : 'Skander'} - 1 contribution`
+              : `Both partners - ${dayContributions.length} contributions`
             }
           </div>
         )}

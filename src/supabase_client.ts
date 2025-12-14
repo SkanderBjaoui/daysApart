@@ -231,6 +231,29 @@ export const db = {
     return { data, error }
   },
 
+  async getHugs(coupleId: string) {
+    const { data, error } = await supabase
+      .from('hugs')
+      .select('*, users(name, partner_role)')
+      .eq('couple_id', coupleId)
+      .order('created_at', { ascending: false })
+    return { data, error }
+  },
+
+  async createHug(coupleId: string, senderId: string, message: string, mood = '🤗') {
+    const { data, error } = await supabase
+      .from('hugs')
+      .insert({
+        couple_id: coupleId,
+        sender_id: senderId,
+        message,
+        mood,
+      })
+      .select('*, users(name, partner_role)')
+      .single()
+    return { data, error }
+  },
+
   // Memories
   async getMemories(coupleId: string, userId?: string) {
     // Get memories with like counts
