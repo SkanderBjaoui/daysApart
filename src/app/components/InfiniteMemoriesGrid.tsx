@@ -123,17 +123,21 @@ export const InfiniteMemoriesGrid: React.FC<InfiniteMemoriesGridProps> = ({
                         : 'bg-white'
                     }`}
                   >
-                    {/* Photo */}
+                    {/* Photos */}
                     {memory.photo && (
                       <div className="relative">
-                        <img
-                          src={memory.photo}
-                          alt="Memory"
-                          className="w-full object-cover"
-                          style={{
-                            maxHeight: memory.text.length > 100 ? '200px' : '300px'
-                          }}
-                        />
+                        {(Array.isArray(memory.photo) ? memory.photo : [memory.photo]).map((photoUrl, idx) => (
+                          <div key={idx} className={idx > 0 ? 'mt-2' : ''}>
+                            <img
+                              src={photoUrl}
+                              alt={`Memory ${idx + 1}`}
+                              className="w-full object-cover rounded-lg"
+                              style={{
+                                maxHeight: memory.text.length > 100 ? '200px' : '300px'
+                              }}
+                            />
+                          </div>
+                        ))}
                         <div className="absolute top-2 right-2">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs ${getAuthorColor(memory.author_id)}`}>
                             {getAuthorName(memory.author_id).charAt(0)}

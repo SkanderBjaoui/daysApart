@@ -97,77 +97,25 @@ export const db = {
   },
 
   async uploadPhoto(file: File, coupleId: string, userId: string, caption?: string) {
-    console.log('Uploading photo:', { fileName: file.name, fileSize: file.size, coupleId, userId });
-    
     // Upload to storage first
     const fileName = `${coupleId}/${Date.now()}-${file.name}`
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('photos')
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: true, // Allow overwriting for testing
+        upsert: true,
         contentType: file.type
       })
 
-    console.log('Upload result:', { uploadData, uploadError });
-
     if (uploadError) {
       console.error('Upload error details:', uploadError);
-      
-      // If RLS error, try with service role key (bypass RLS)
-      if (uploadError.message.includes('row-level security')) {
-        console.log('Trying service role upload...');
-        const serviceRoleSupabase = createClient(
-          import.meta.env.VITE_SUPABASE_URL,
-          import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
-        );
-        
-        const { error: serviceError } = await serviceRoleSupabase.storage
-          .from('photos')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: true,
-            contentType: file.type
-          });
-          
-        if (serviceError) {
-          console.error('Service role upload failed:', serviceError);
-          return { data: null, error: serviceError };
-        }
-        
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('photos')
-          .getPublicUrl(fileName);
-
-        console.log('Public URL:', publicUrl);
-
-        // Insert photo record with service role
-        const { data, error } = await serviceRoleSupabase
-          .from('photos')
-          .insert({
-            photo: publicUrl,
-            uploaded_by: userId,
-            couple_id: coupleId,
-            storage_path: fileName,
-            caption
-          })
-          .select()
-          .single();
-
-        console.log('Database insert result:', { data, error });
-        return { data, error };
-      }
-      
       return { data: null, error: uploadError }
     }
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('photos')
-      .getPublicUrl(fileName)
-
-    console.log('Public URL:', publicUrl);
+      .getPublicUrl(fileName);
 
     // Insert photo record
     const { data, error } = await supabase
@@ -180,10 +128,8 @@ export const db = {
         caption
       })
       .select()
-      .single()
-
-    console.log('Final upload result:', { data, error });
-    return { data, error }
+      .single();
+    return { data, error };
   },
 
   // Daily Check-ins
@@ -272,6 +218,7 @@ export const db = {
     // If userId provided, get detailed like information
     let processedData = memories.map((memory: any) => ({
       ...memory,
+      photo: memory.photo ? (typeof memory.photo === 'string' ? JSON.parse(memory.photo) : memory.photo) : undefined,
       likes: memory.memory_likes?.[0]?.count || 0,
       liked: false,
       likers: [],
@@ -316,11 +263,30 @@ export const db = {
       .from('memories')
       .insert({
         couple_id: coupleId,
-        ...memoryData
+        ...memoryData,
+        photo: memoryData.photo ? (Array.isArray(memoryData.photo) ? JSON.stringify(memoryData.photo) : memoryData.photo) : undefined,
       })
       .select('*, users(name, partner_role)')
       .single()
-    return { data, error }
+    if (!data || error) return { data, error }
+
+    let normalizedPhoto = data.photo
+    if (typeof normalizedPhoto === 'string') {
+      try {
+        const parsed = JSON.parse(normalizedPhoto)
+        if (Array.isArray(parsed)) normalizedPhoto = parsed
+      } catch {
+        // ignore
+      }
+    }
+
+    return {
+      data: {
+        ...data,
+        photo: normalizedPhoto,
+      },
+      error,
+    }
   },
 
   async likeMemory(memoryId: string, userId: string) {
@@ -348,7 +314,7 @@ export const db = {
       .select('*')
       .eq('memory_id', memoryId)
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
     return { data: !!data, error }
   },
 

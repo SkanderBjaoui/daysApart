@@ -33,18 +33,6 @@ interface Thought {
   avatarColor: string;
 }
 
-interface CheckIn {
-  date: string;
-  partner1?: {
-    note: string;
-    avatar: string;
-  };
-  partner2?: {
-    note: string;
-    avatar: string;
-  };
-}
-
 interface Entry {
   date: string;
   photo?: string;
@@ -107,27 +95,6 @@ export default function App() {
     },
   ]);
 
-  const [checkIns] = useState<CheckIn[]>([
-    {
-      date: new Date().toISOString().split('T')[0],
-      partner1: {
-        note: "Thinking of you!",
-        avatar: 'A',
-      },
-    },
-    {
-      date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
-      partner1: {
-        note: "Had a great day!",
-        avatar: 'A',
-      },
-      partner2: {
-        note: "Me too! Miss you!",
-        avatar: 'B',
-      },
-    },
-  ]);
-
   const [memories, setMemories] = useState<Memory[]>([
     {
       id: '1',
@@ -178,8 +145,7 @@ export default function App() {
     alert('Photo upload feature - In a real app, this would open a file picker!');
   };
 
-  const handleDayClick = (date: string) => {
-    console.log('Clicked date:', date);
+  const handleDayClick = (_date: string) => {
     // In a real app, this would show the entries for that day
   };
 
@@ -213,7 +179,6 @@ export default function App() {
   };
 
   const handleVirtualHug = () => {
-    console.log('Virtual hug sent! 🤗');
   };
 
   // Sample partner entry for daily entry page
@@ -357,7 +322,7 @@ export default function App() {
         {/* Calendar View */}
         {currentView === 'calendar' && (
           <div>
-            <CalendarView checkIns={checkIns} totalDays={totalDays} onDayClick={handleDayClick} />
+            <CalendarView contributions={[]} totalDays={totalDays} onDayClick={handleDayClick} />
           </div>
         )}
 

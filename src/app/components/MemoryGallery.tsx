@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Heart, User, Calendar, X, Filter, Clock, TrendingUp } from 'lucide-react';
+import { Heart, Calendar, X, Filter, Clock, TrendingUp } from 'lucide-react';
 
 interface Memory {
   id: string;
   date: string;
-  photo?: string;
+  photo?: string | string[];
   text: string;
   stickers: string[];
   mood: string;
   author_id: string;
+  created_at?: string;
   users: {
     name: string;
     partner_role: string;
@@ -63,7 +64,13 @@ export const MemoryGallery: React.FC<MemoryGalleryProps> = ({
     return '';
   };
 
-  const filteredMemories = memories.filter((memory) => {
+  const sortedMemories = [...memories].sort((a, b) => {
+    const aTime = new Date((a.created_at || a.date) as string).getTime();
+    const bTime = new Date((b.created_at || b.date) as string).getTime();
+    return bTime - aTime;
+  });
+
+  const filteredMemories = sortedMemories.filter((memory) => {
     if (filter === 'all') return true;
     if (filter === 'partner1') return memory.author_id === '00000000-0000-0000-0000-000000000001';
     if (filter === 'partner2') return memory.author_id === '00000000-0000-0000-0000-000000000002';
@@ -215,14 +222,18 @@ export const MemoryGallery: React.FC<MemoryGalleryProps> = ({
                   </div>
                 )}
 
-                {/* Photo */}
+                {/* Photos */}
                 {memory.photo ? (
                   <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={memory.photo}
-                      alt="Memory"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
+                    {(Array.isArray(memory.photo) ? memory.photo : [memory.photo]).map((photoUrl, idx) => (
+                      <div key={idx} className={idx > 0 ? 'mt-2' : ''}>
+                        <img
+                          src={photoUrl}
+                          alt={`Memory ${idx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 rounded-lg"
+                        />
+                      </div>
+                    ))}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <div className="absolute top-2 right-2 text-3xl">
                       {memory.mood}
@@ -350,13 +361,14 @@ export const MemoryGallery: React.FC<MemoryGalleryProps> = ({
                       <span className="text-2xl">{memory.mood}</span>
                     </div>
 
-                    {memory.photo && (
+                    {(Array.isArray(memory.photo) ? memory.photo : memory.photo ? [memory.photo] : []).map((photoUrl, idx) => (
                       <img
-                        src={memory.photo}
-                        alt="Memory"
+                        key={idx}
+                        src={photoUrl}
+                        alt={`Memory ${idx + 1}`}
                         className="w-full h-64 object-cover rounded-xl mb-3"
                       />
-                    )}
+                    ))}
 
                     <p className="text-[var(--foreground)] mb-2">{memory.text}</p>
 
@@ -457,13 +469,14 @@ export const MemoryGallery: React.FC<MemoryGalleryProps> = ({
                 <span className="text-[var(--muted-foreground)]">Feeling</span>
               </div>
 
-              {selectedMemory.photo && (
+              {(Array.isArray(selectedMemory.photo) ? selectedMemory.photo : selectedMemory.photo ? [selectedMemory.photo] : []).map((photoUrl, idx) => (
                 <img
-                  src={selectedMemory.photo}
-                  alt="Memory"
+                  key={idx}
+                  src={photoUrl}
+                  alt={`Memory ${idx + 1}`}
                   className="w-full rounded-2xl mb-6 shadow-lg"
                 />
-              )}
+              ))}
 
               <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 mb-6">
                 <p className="text-[var(--foreground)] whitespace-pre-wrap">

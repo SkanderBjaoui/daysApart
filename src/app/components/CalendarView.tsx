@@ -51,7 +51,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  console.log('CalendarView received:', { contributions: contributions.length, totalDays, targetDate });
 
   // Ensure we're showing the current month
   useEffect(() => {
@@ -82,7 +81,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     ? new Date(targetDate)
     : new Date(today.getTime() + (totalDays * 24 * 60 * 60 * 1000));
 
-  console.log('Calendar date range:', { firstContributionDate, endDate });
 
   const getDayInfo = (day: number) => {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
@@ -102,19 +100,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     const isHalfway = daysUntil === Math.floor(totalDays / 2);
     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
-    // Debug logging for today
     if (day === today.getDate() && currentMonth.getMonth() === today.getMonth() && currentMonth.getFullYear() === today.getFullYear()) {
-      console.log('Today check:', { 
-        day, 
-        dateStr, 
-        isToday, 
-        isInRange, 
-        normalizedDate,
-        normalizedFirstContribution,
-        normalizedEnd,
-        currentMonth, 
-        today 
-      });
+      // Today logic
     }
 
     return { isToday, isFuture, isInRange, dateStr, daysUntil, isHalfway, isWeekend };

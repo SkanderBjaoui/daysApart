@@ -195,26 +195,19 @@ export default function App() {
   };
 
   const loadCouple = async (coupleId: string) => {
-    console.log('Loading couple data for:', coupleId);
-    const { data, error } = await db.getCouple(coupleId);
-    console.log('Couple data response:', { data, error });
+    const { data } = await db.getCouple(coupleId);
     
     if (data) {
       setCouple(data);
-      console.log('Couple set with target_date:', data.target_date);
     } else {
       // Fallback: create a default couple with target_date (45 days from now)
-      console.log('No couple data found, using fallback');
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 45);
       const fallbackCouple = {
         id: coupleId,
-        partner1_name: 'Nour',
-        partner2_name: 'Skander',
-        target_date: futureDate.toISOString().split('T')[0]
+        target_date: futureDate.toISOString().split('T')[0],
       };
       setCouple(fallbackCouple);
-      console.log('Fallback couple set with target_date:', fallbackCouple.target_date);
     }
   };
 
@@ -233,10 +226,9 @@ export default function App() {
   }, [checkIns, currentPartner]);
 
   // Calculate total days and days remaining based on target_date from database
-  const totalDays = couple?.target_date 
+  const totalDays = couple?.target_date
     ? (() => {
         const days = Math.ceil((new Date(couple.target_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-        console.log('Calculated totalDays:', days, 'from target_date:', couple.target_date);
         return days;
       })()
     : 45;
@@ -244,7 +236,6 @@ export default function App() {
     ? Math.ceil((new Date(couple.target_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : 45;
 
-  console.log('Current state:', { couple: couple?.target_date, totalDays, daysRemaining });
 
   const handleCheckIn = async (note: string) => {
     if (!couple || !currentUser) return;
@@ -290,7 +281,6 @@ export default function App() {
   };
 
   const handleDayClick = (date: string) => {
-    console.log('Clicked date:', date);
     setDayDetailModalDate(date);
   };
 
@@ -324,8 +314,6 @@ export default function App() {
       ...entry,
       author_id: userToUse.id
     });
-    
-    console.log('Database response:', { data, error });
     
     if (error) {
       console.error('Database error:', error);
@@ -371,8 +359,6 @@ export default function App() {
   };
 
   const handleVirtualHug = async () => {
-    console.log('Virtual hug sent! 🤗');
-
     if (!couple?.id) return;
 
     const partner1Name = couple?.partner1_name || 'Partner 1';

@@ -1,12 +1,12 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "days-apart",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "start": "serve dist -p 5173"
+    "start": "serve -s dist -l $PORT"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

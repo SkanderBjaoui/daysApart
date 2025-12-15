@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Cloud, Heart, Camera, Smile, Send, Eye, X, Maximize2 } from 'lucide-react';
+import { Cloud, Heart, Smile, Send, Eye, X, Maximize2 } from 'lucide-react';
 
 interface Entry {
   date: string;
-  photo?: string;
+  photo?: string | string[];
   text: string;
   stickers: string[];
   mood: string;
@@ -37,7 +37,6 @@ export const DailyEntryPage: React.FC<DailyEntryPageProps> = ({
   onSave,
   onPhotoUpload,
 }) => {
-  const [photo, setPhoto] = useState<string>('');
   const [multiplePhotos, setMultiplePhotos] = useState<File[]>([]);
   const [text, setText] = useState('');
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
@@ -108,9 +107,6 @@ export const DailyEntryPage: React.FC<DailyEntryPageProps> = ({
         if (file.type.startsWith('image/')) {
           // Compress image before adding
           const compressedFile = await compressImage(file);
-          const originalSize = (file.size / 1024).toFixed(1);
-          const compressedSize = (compressedFile.size / 1024).toFixed(1);
-          console.log(`Compressed: ${originalSize}KB → ${compressedSize}KB`);
           newPhotos.push(compressedFile);
         }
       }
@@ -133,17 +129,20 @@ export const DailyEntryPage: React.FC<DailyEntryPageProps> = ({
     setIsSaving(true);
     
     try {
-      let uploadedPhotoUrl: string | undefined;
+      let uploadedPhotoUrls: string[] = [];
       
-      // Upload photo if there's one
+      // Upload all photos if there are any
       if (multiplePhotos.length > 0 && onPhotoUpload) {
-        uploadedPhotoUrl = await onPhotoUpload(multiplePhotos[0]);
+        for (const file of multiplePhotos) {
+          const url = await onPhotoUpload(file);
+          if (url) uploadedPhotoUrls.push(url);
+        }
       }
       
       setTimeout(() => {
         onSave({
           date: today.toISOString().split('T')[0],
-          photo: uploadedPhotoUrl,
+          photo: uploadedPhotoUrls.length > 0 ? uploadedPhotoUrls : undefined,
           text,
           stickers: selectedStickers,
           mood: selectedMood,
@@ -152,7 +151,7 @@ export const DailyEntryPage: React.FC<DailyEntryPageProps> = ({
         setIsSaving(false);
       }, 1500);
     } catch (error) {
-      console.error('Error uploading photo:', error);
+      console.error('Error uploading photos:', error);
       setIsSaving(false);
     }
   };
@@ -357,13 +356,15 @@ export const DailyEntryPage: React.FC<DailyEntryPageProps> = ({
                 </div>
               </div>
 
-              {partnerEntry.photo && (
+              {/* Multiple Images */}
+              {(Array.isArray(partnerEntry.photo) ? partnerEntry.photo : partnerEntry.photo ? [partnerEntry.photo] : []).map((photoUrl, idx) => (
                 <img
-                  src={partnerEntry.photo}
-                  alt="Partner's memory"
+                  key={idx}
+                  src={photoUrl}
+                  alt={`Partner's memory ${idx + 1}`}
                   className="w-full h-auto max-h-64 object-cover rounded-xl mb-4"
                 />
-              )}
+              ))}
 
               <div className="bg-white/50 rounded-xl p-4 mb-4">
                 <p className="text-[var(--foreground)]">{partnerEntry.text}</p>
@@ -442,12 +443,18 @@ export const DailyEntryPage: React.FC<DailyEntryPageProps> = ({
             <div className="aspect-square rounded-2xl bg-gradient-to-br from-[var(--pastel-pink)] to-[var(--pastel-lavender)] p-4 relative shadow-lg">
               <div className="text-sm text-white mb-2">{today.getDate()}</div>
               
-              {photo && (
-                <img
-                  src={photo}
-                  alt="Preview"
-                  className="w-full h-32 object-cover rounded-xl mb-2"
-                />
+              {/* Multiple Images Preview */}
+              {multiplePhotos.length > 0 && (
+                <div className="space-y-2">
+                  {multiplePhotos.map((file, idx) => (
+                    <img
+                      key={idx}
+                      src={URL.createObjectURL(file)}
+                      alt={`Preview ${idx + 1}`}
+                      className="w-full h-32 object-cover rounded-xl mb-2"
+                    />
+                  ))}
+                </div>
               )}
               
               <div className="bg-white/80 rounded-xl p-2 mb-2 text-xs text-[var(--foreground)] line-clamp-2">
@@ -504,16 +511,16 @@ export const DailyEntryPage: React.FC<DailyEntryPageProps> = ({
 
             {/* Modal Content */}
             <div className="p-6">
-              {/* Full Image */}
-              {partnerEntry.photo && (
-                <div className="mb-6">
+              {/* Multiple Images */}
+              {(Array.isArray(partnerEntry.photo) ? partnerEntry.photo : partnerEntry.photo ? [partnerEntry.photo] : []).map((photoUrl, idx) => (
+                <div key={idx} className="mb-6">
                   <img
-                    src={partnerEntry.photo}
-                    alt="Partner's memory"
+                    src={photoUrl}
+                    alt={`Partner's memory ${idx + 1}`}
                     className="w-full h-auto rounded-xl shadow-lg"
                   />
                 </div>
-              )}
+              ))}
 
               {/* Text Content */}
               <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 mb-6">
