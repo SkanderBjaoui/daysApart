@@ -72,7 +72,7 @@ export const db = {
       .from('users')
       .select('*, couples(*)')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
     return { data, error }
   },
 
@@ -97,13 +97,21 @@ export const db = {
   },
 
   async uploadPhoto(file: File, coupleId: string, userId: string, caption?: string) {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError) return { data: null, error: sessionError }
+
+    if (!sessionData.session) {
+      const { error: anonError } = await supabase.auth.signInAnonymously()
+      if (anonError) return { data: null, error: anonError }
+    }
+
     // Upload to storage first
     const fileName = `${coupleId}/${Date.now()}-${file.name}`
     const { error: uploadError } = await supabase.storage
       .from('photos')
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: true,
+        upsert: false,
         contentType: file.type
       })
 
